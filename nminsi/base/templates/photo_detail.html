@@ -6,14 +6,17 @@
     <h1>Photo Details</h1>
     
     <div class="card">
-        <img src="{{ photo.photo.url }}" class="card-img-top" alt="Photo taken on {{ photo.date_taken }}">
+        <div class="text-center"> <!-- Center the image within the card -->
+            <img src="{{ photo.photo.url }}" class="card-img-top" alt="Photo taken on {{ photo.date_taken }}" style="max-width: 100%; height: auto; width: 300px;"/> <!-- Set a max width and height auto for responsive design -->
+        </div>
         <div class="card-body">
             <h5 class="card-title">Date Taken: {{ photo.date_taken }}</h5>
             <p class="card-text">Collaborated: {% if photo.collaborated %} Yes {% else %} No {% endif %}</p>
+            <a href="{% url 'haiku_create' %}?photo_id={{ photo.id }}" class="btn btn-custom">Create a Haiku</a>
         </div>
     </div>
 
-    <a href="{% url 'main' %}" class="btn btn-primary mt-4">Back to Home</a>
+    <a href="{% url 'main' %}" class="btn btn-custom mt-4">Back to Home</a>
 </div>
 
 {% endblock %}

@@ -13,15 +13,33 @@ def main(request):
 
     return render(request, 'index.html', {'photos': photos})
 
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Photo, Haiku
+
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Photo, Haiku
+
 def haiku_create(request):
     if request.method == "POST":
         text = request.POST.get('text')
         author = request.POST.get('author')
-        photo_id = request.POST.get('photo_id')  # Get photo ID if submitted from photo detail
-        haiku = Haiku(text=text, author=author, photo_id=photo_id)
+        photo_id = request.POST.get('photo_id')  # Get photo ID from POST data
+        
+        # Create Haiku without a photo if photo_id is not provided
+        haiku = Haiku(text=text, author=author)
+        if photo_id:
+            haiku.photo_id = photo_id  # Only associate if photo_id is present
         haiku.save()
         return redirect('haikus')  # Redirect to the haikus page after saving
-    return render(request, 'haiku_create.html')  # Render haiku creation form
+
+    # If GET, retrieve the photo_id from query parameters
+    photo_id = request.GET.get('photo_id')
+    photo = None
+    if photo_id:
+        photo = get_object_or_404(Photo, id=photo_id)  # Ensure the photo exists
+
+    return render(request, 'haiku_create.html', {'photo': photo})  # Pass the photo to the template (if exists)
+
 
 def haikus_list(request):
     haikus = Haiku.objects.all()

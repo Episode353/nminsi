@@ -7,10 +7,12 @@
     <div class="row">
         {% for photo in photos %}
             <div class="col-md-4 mb-4"> <!-- Use Bootstrap's grid columns -->
-                <div class="seasonal-content-box {% if photo.collaborated %} grayed-out {% endif %}">
+                <div class="{% if photo.collaborated %} grayed-out {% endif %} seasonal-content-box">
                     <a href="{% url 'photo_detail' photo.id %}">
-                        <img src="{{ photo.photo.url }}" alt="Photo taken on {{ photo.date_taken }}" class="img-fluid max-image-size">
-                        <h5>Photo taken on {{ photo.date_taken }}</h5>
+                        <span class="fg-image-wrap">
+                            <img src="{{ photo.photo.url }}" class="img-fluid max-image-size">
+                            <div class="photo-number">{{ photo.number }}</div>
+                        </span>
                     </a>
                 </div>
             </div>
@@ -18,21 +20,35 @@
     </div>
 
     <!-- Pagination Section -->
-    <div class="pagination">
-        <span class="step-links">
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
             {% if photos.has_previous %}
-                <a href="?page=1">&laquo; first</a>
-                <a href="?page={{ photos.previous_page_number }}">previous</a>
+                <li class="page-item">
+                    <a class="page-link" href="?page=1" aria-label="First">
+                        <span aria-hidden="true">&laquo; First</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ photos.previous_page_number }}">Previous</a>
+                </li>
             {% endif %}
-            <span class="current">
-                Page {{ photos.number }} of {{ photos.paginator.num_pages }}.
-            </span>
+            <li class="page-item disabled">
+                <span class="page-link">
+                    Page {{ photos.number }} of {{ photos.paginator.num_pages }}.
+                </span>
+            </li>
             {% if photos.has_next %}
-                <a href="?page={{ photos.next_page_number }}">next</a>
-                <a href="?page={{ photos.paginator.num_pages }}">last &raquo;</a>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ photos.next_page_number }}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ photos.paginator.num_pages }}" aria-label="Last">
+                        <span aria-hidden="true">Last &raquo;</span>
+                    </a>
+                </li>
             {% endif %}
-        </span>
-    </div>
+        </ul>
+    </nav>
 </div>
 
 <style>
@@ -42,26 +58,55 @@
     }
 
     .seasonal-content-box {
-        border: 1px solid var(--bs-border-color);
-        background-color: var(--bs-body-bg);
+        background-color: black; /* Changed to black for visibility */
         padding: 1.5rem;
         border-radius: 12px;
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-        min-height: 180px;
-        transition: box-shadow 0.3s ease, transform 0.3s ease;
+        min-height: 280px; /* Increase to accommodate the number */
+        position: relative; /* Set position relative for absolute positioning of number */
     }
 
     /* Limit image size */
     .max-image-size {
         max-width: 100%; /* Ensure the image is responsive */
-        height: auto; /* Maintain aspect ratio */
-    }
-
-    /* Optional: set a fixed height for images */
-    .seasonal-content-box img {
         max-height: 200px; /* Set a maximum height */
         object-fit: cover; /* Maintain aspect ratio */
         border-radius: 8px; /* Optional: add rounded corners */
+    }
+
+    /* Position the photo number */
+    .photo-number {
+        font-family: DMSans; /* Ensure this font is loaded */
+        position: absolute;
+        bottom: 10px; /* Adjust to place it closer to the bottom */
+        left: 10px; /* Positioning from the left */
+        color: #98A9C9; /* Set text color */
+        background-color: rgba(0, 0, 0, 0.5); /* Optional: add a background for contrast */
+        padding: 5px; /* Optional: add some padding */
+        border-radius: 5px; /* Optional: round the corners */
+    }
+
+    /* Pagination styling */
+    .pagination {
+        background-color: transparent; /* Set pagination background to white */
+        border-radius: 5px; /* Rounded corners */
+        --bs-pagination-bg:black;
+    }
+    
+    .page-link {
+        font-family: DMSans; /* Apply the sans font */
+        color: white; /* Set text color for links */
+    }
+
+     .page-link {
+        color: gray; /* Color for disabled links */
+        background-color: black;
+    }
+
+
+
+    .page-item .page-link:hover {
+        background-color: #f8f9fa; /* Light hover effect */
     }
 </style>
 

@@ -1,4 +1,3 @@
-<!-- base.html -->
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -15,66 +14,94 @@
     
     <!-- Custom styles -->
     <style>
+        :root {
+            --bs-body-color: black; /* Change body text color to black */
+            --bs-secondary-color: white;
+        }
+        
+
         @font-face {
             font-family: FrankRuhlLibre-Black;
             src: url({% static 'fonts/FrankRuhlLibre-Black.ttf' %});
         }
-        
-    
+
         @font-face {
-            font-family: FrankRuhlLibre-Bold;
-            src: url({% static 'fonts/FrankRuhlLibre-Bold.ttf' %});
-        }
-    
-        @font-face {
-            font-family: FrankRuhlLibre-Light;
-            src: url({% static 'fonts/FrankRuhlLibre-Light.ttf' %});
+            font-family: DMSans;
+            src: url({% static 'fonts/DMSans-Regular.ttf' %});
         }
 
-            
-        @font-face {
-            font-family: FrankRuhlLibre-Medium;
-            src: url({% static 'fonts/FrankRuhlLibre-Medium.ttf' %});
-        }
-    
-    
-        @font-face {
-            font-family: FrankRuhlLibre-Regular;
-            src: url({% static 'fonts/FrankRuhlLibre-Regular.ttf' %});
+        body {
+            font-family: FrankRuhlLibre-Black;
+            background-color: black;  /* Dark background */
+            color: white;  /* Light text color for body */
+            padding-top: 60px; /* Add padding to prevent content from hiding behind fixed header */
         }
 
+        .card {
+            background-color: transparent; /* Dark card background */
+            border: none; /* Optional: remove card border */
+            color: white;
+        }
 
+        .form-control {
+            background-color: #495057; /* Dark input background */
+            color: white; /* Light input text color */
+            border: 1px solid #6c757d; /* Optional: border color */
+        }
+
+        .form-control:focus {
+            background-color: #495057; /* Keep focus color dark */
+            color: white; /* Keep text light on focus */
+            border-color: #80bdff; /* Optional: focus border color */
+            box-shadow: none; /* Remove default focus shadow */
+        }
+
+        /* Other custom styles */
         .header-box { /* Add styling for header if needed */ }
         .main-container { /* Add styling for main container if needed */ }
         .footer { /* Add styling for footer if needed */ }
 
-        .body-bg-text-shadow {
-            text-shadow: .15rem .15rem var(--bs-body-bg) !important;
+        .btn-custom {
+            background-color: transparent;
+            color: white;
+            border: 2px solid white;
+            border-radius: 5px;
+            transition: background-color 0.3s, color 0.3s;
         }
 
-        body{
-            font-family: FrankRuhlLibre-Black;
+        .btn-custom:hover {
+            background-color: white;
+            color: black;
+        }
+
+        /* New styles for header text */
+        header {
+            position: fixed; /* Make the header fixed */
+            top: 0; /* Align it to the top */
+            left: 0; /* Align it to the left */
+            right: 0; /* Align it to the right */
+            z-index: 1000; /* Ensure it is above other content */
+            background-color: black; /* Set background color to match body */
+        }
+
+        header .nav-link {
+            color: white; /* Set link color to white */
+        }
+        
+        header .nav-link:hover {
+            color: #ccc; /* Optional: change color on hover */
+        }
+
+        header .fs-4 {
+            color: white; /* Set header title color to white */
         }
     </style>
-
-
 </head>
 <body>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const darkModeSwitch = document.getElementById('darkModeSwitch');
-            const currentTheme = localStorage.getItem('theme') || 'light';
-            document.documentElement.setAttribute('data-bs-theme', currentTheme);
-            darkModeSwitch.checked = currentTheme === 'dark';
-
-            darkModeSwitch.addEventListener('change', function() {
-                const theme = darkModeSwitch.checked ? 'dark' : 'light';
-                document.documentElement.setAttribute('data-bs-theme', theme);
-                localStorage.setItem('theme', theme);
-            });
-        });
+        // Dark mode script here if needed
     </script>
-    
+
     <!-- Main Container -->
     <div class="main-container">
         <center>
@@ -82,37 +109,20 @@
             <header class="p-3 mb-3 border-bottom">
                 <div class="container">
                     <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
-                        
-                        <!-- Logo and title -->
                         <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none">
-                            <svg class="bi me-2" width="40" height="32"><use xlink:href="#bootstrap"></use></svg>
                             <span class="fs-4">N.Minsi</span>
                         </a>
 
-                    <!-- Navigation links -->
-                    <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
-                        <li><a href="{% url 'main' %}" class="nav-link px-2 link-body-emphasis">Home</a></li>
-                        <li><a href="{% url 'fonts' %}" class="nav-link px-2 link-body-emphasis">Fonts</a></li>
-                        <li><a href="{% url 'haikus' %}" class="nav-link px-2 link-body-emphasis">Haikus</a></li>
-                        <li><a href="{% url 'haiku_create' %}" class="nav-link px-2 link-body-emphasis">Create a Haiku</a></li>
-                    </ul>
-
-                    <!--Search Form-
-                    <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3" role="search" method="GET" action="{% url 'main' %}">
-                        <input type="search" name="q" class="form-control" placeholder="Search..." aria-label="Search">
-                        <button type="submit" class="btn btn-primary">Search</button>
-                    </form>
-                    -->
-                    
-                    
-
-                        
-
+                        <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
+                            <li><a href="{% url 'main' %}" class="nav-link px-2">Home</a></li>
+                            <li><a href="{% url 'fonts' %}" class="nav-link px-2">Fonts</a></li>
+                            <li><a href="{% url 'haikus' %}" class="nav-link px-2">Haikus</a></li>
+                            <li><a href="{% url 'haiku_create' %}" class="nav-link px-2">Create a Haiku</a></li>
+                        </ul>
                     </div>
                 </div>
             </header>
 
-            <!-- Display messages if any exist -->
             {% if messages %}
             <div class="message-box">
                 {% for message in messages %}
@@ -127,26 +137,9 @@
                 {% endblock %}
             </div>
 
-            <!-- Footer section -->
             <div class="container">
                 <footer class="py-3 my-4">
-
-                    <!--
-                    I Am Commenting all of these out because i dont see the point of having trem
-                    since we have the header, but i think it looks too nice to delete
-                    therefore i will leave it here.
-                    -->
-
-                    <!--
-                    <ul class="nav justify-content-center border-bottom pb-3 mb-3">
-                        <li class="nav-item"><a href="#" class="nav-link px-2 text-body-secondary">Home</a></li>
-                        <li class="nav-item"><a href="#" class="nav-link px-2 text-body-secondary">Features</a></li>
-                        <li class="nav-item"><a href="#" class="nav-link px-2 text-body-secondary">Pricing</a></li>
-                        <li class="nav-item"><a href="#" class="nav-link px-2 text-body-secondary">FAQs</a></li>
-                        <li class="nav-item"><a href="#" class="nav-link px-2 text-body-secondary">About</a></li>   
-                    </ul>
-                    -->
-                    <p class="text-center text-body-secondary">© 2024 N.Minsi</p>
+                    <p class="text-center text-body-secondary" style="color: #98A9C9!important;">© 2024 N.Minsi</p>
                 </footer>
             </div>
         </center>
