@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h1>Haikus</h1>
+    <div class="row">
+        {% for haiku in haikus %}
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Haiku {{ haiku.number }}</h5>
+                        <p class="card-text">{{ haiku.text }}</p>
+                        <p class="card-text"><small class="text-muted">By {{ haiku.author }}</small></p>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination Section -->
+    <div class="pagination">
+        <span class="step-links">
+            {% if haikus.has_previous %}
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ haikus.previous_page_number }}">previous</a>
+            {% endif %}
+            <span class="current">
+                Page {{ haikus.number }} of {{ haikus.paginator.num_pages }}.
+            </span>
+            {% if haikus.has_next %}
+                <a href="?page={{ haikus.next_page_number }}">next</a>
+                <a href="?page={{ haikus.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+</div>
+{% endblock %}

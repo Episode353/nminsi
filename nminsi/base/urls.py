@@ -6,8 +6,11 @@ from . import views
 
 urlpatterns = [
     path('', views.main, name='main'),
+    path('haikus/', views.haikus_list, name='haikus'),  # Page to display all haikus
+    path('haiku/create/', views.haiku_create, name='haiku_create'),  # Page to create a haiku
+    path('photo/<int:photo_id>/', views.photo_detail, name='photo_detail'),
+    path('admin/', admin.site.urls),
     path('fonts/', views.fonts, name='fonts'),
-    path('photo/<int:photo_id>/', views.photo_detail, name='photo_detail'),  # Add this line
 ]
 
 if settings.DEBUG:

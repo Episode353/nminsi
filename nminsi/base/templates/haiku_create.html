@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h1>Create a Haiku</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="text" class="form-label">Haiku Text</label>
+            <textarea id="text" name="text" class="form-control" rows="3" required></textarea>
+        </div>
+        <div class="mb-3">
+            <label for="author" class="form-label">Author</label>
+            <input type="text" id="author" name="author" class="form-control" required>
+        </div>
+        <input type="hidden" name="photo_id" value="{{ photo.id }}"> <!-- Pass photo ID if creating from photo detail -->
+        <button type="submit" class="btn btn-primary">Submit Haiku</button>
+    </form>
+    <a href="{% url 'main' %}" class="btn btn-secondary mt-3">Back to Home</a>
+</div>
+{% endblock %}
