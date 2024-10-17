@@ -3,7 +3,7 @@
 {% block content %}
 
 <div class="container mt-5">
-    <h1>Photo Details</h1>
+    <h1>{{ photo.number }}</h1>
     
     <div class="card">
         <div class="text-center"> <!-- Center the image within the card -->
@@ -12,11 +12,23 @@
         <div class="card-body">
             <h5 class="card-title">Date Taken: {{ photo.date_taken }}</h5>
             <p class="card-text">Collaborated: {% if photo.collaborated %} Yes {% else %} No {% endif %}</p>
-            <a href="{% url 'haiku_create' %}?photo_id={{ photo.id }}" class="btn btn-custom">Create a Haiku</a>
+            <a href="{% url 'haiku_create' %}?photo_number={{ photo.number }}" class="btn btn-custom">Create a Haiku</a>
         </div>
     </div>
 
-    <a href="{% url 'main' %}" class="btn btn-custom mt-4">Back to Home</a>
+    <h2 class="mt-4">Haiku(s):</h2>
+    <div>
+        {% for haiku in haikus %}
+            <a>
+                {{ haiku.text }}
+            </br>
+            <strong>Author: {{ haiku.author }}:</strong> 
+            </a>
+        {% empty %}
+            <a>No haikus associated with this photo.</a>
+        {% endfor %}
+    </div>
+
 </div>
 
 {% endblock %}
