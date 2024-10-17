@@ -11,7 +11,9 @@ urlpatterns = [
     path('photo/<int:photo_id>/', views.photo_detail, name='photo_detail'),
     path('admin/', admin.site.urls),
     path('fonts/', views.fonts, name='fonts'),
+    path('process_photos/', views.process_photos, name='process_photos'),
 ]
+
 
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

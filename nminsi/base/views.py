@@ -54,3 +54,40 @@ def photo_detail(request, photo_id):
 
 def fonts(request):
     return render(request, 'fonts.html')
+
+import os
+from django.conf import settings
+from django.http import HttpResponse
+from .models import Photo
+from datetime import date
+
+def process_photos(request):
+    # Path to the folder containing photos
+    media_folder = os.path.join(settings.MEDIA_ROOT, 'photos')
+
+    # Initialize an empty list to store update messages
+    updates = []
+
+    # Get all existing Photo objects
+    existing_photos = Photo.objects.all().values_list('photo', flat=True)
+    existing_photo_files = set([os.path.basename(photo_path) for photo_path in existing_photos])
+
+    # List all files in the 'photos' folder
+    if os.path.exists(media_folder):
+        for filename in os.listdir(media_folder):
+            # Check if the file is already in the Photo model
+            if filename not in existing_photo_files:
+                # Create a new Photo entry for each missing file
+                new_photo = Photo.objects.create(
+                    date_taken=date.today(),
+                    photo=f'photos/{filename}',
+                    number=Photo.objects.count() + 1  # Increment number
+                )
+                updates.append(f'Added {filename} as photo {new_photo.number}.')
+            else:
+                updates.append(f'{filename} already exists in the database.')
+    else:
+        updates.append("Media folder does not exist.")
+
+    # Return updates as a simple HTTP response
+    return HttpResponse('<br>'.join(updates))
