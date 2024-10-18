@@ -2,16 +2,37 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator
 from .models import Photo, Haiku
 
+from django.shortcuts import render
+from django.core.paginator import Paginator
+from .models import Photo
+
+from django.shortcuts import render
+from django.core.paginator import Paginator
+from .models import Photo
+
 def main(request):
     # Fetch all photos from the database
     photo_list = Photo.objects.all()
-    
+
+    # Handle sorting
+    sort_option = request.GET.get('sort', 'number')  # Default to 'number'
+    if sort_option == 'date':
+        photo_list = photo_list.order_by('date_taken')  # Sort by date taken
+    elif sort_option == 'collaborated':
+        photo_list = photo_list.filter(collaborated=True).order_by('number')  # Sort by collaborated status
+    elif sort_option == 'not_collaborated':
+        photo_list = photo_list.filter(collaborated=False).order_by('number')  # Sort by not collaborated status
+    else:
+        photo_list = photo_list.order_by('number')  # Default sort by number
+
     # Set up pagination
-    paginator = Paginator(photo_list, 12)
+    paginator = Paginator(photo_list, 24)  # Display 24 photos per page
     page_number = request.GET.get('page')
     photos = paginator.get_page(page_number)
 
-    return render(request, 'index.html', {'photos': photos})
+    return render(request, 'index.html', {'photos': photos, 'request': request})
+
+
 
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Photo, Haiku
@@ -59,12 +80,18 @@ def haiku_create(request):
 
 
 
+from django.shortcuts import render
+from django.core.paginator import Paginator
+from .models import Haiku
+
 def haikus_list(request):
     haikus = Haiku.objects.all()
-    paginator = Paginator(haikus, 10)  # Display 10 haikus per page
+    paginator = Paginator(haikus, 50)  # Display 10 haikus per page
     page_number = request.GET.get('page')
     haikus_page = paginator.get_page(page_number)
     return render(request, 'haikus_list.html', {'haikus': haikus_page})
+
+
 
 def photo_detail(request, photo_id):
     photo = get_object_or_404(Photo, id=photo_id)
@@ -81,7 +108,6 @@ from django.http import HttpResponse
 from .models import Photo
 from datetime import date
 import re
-
 def process_photos(request):
     # Path to the folder containing photos
     media_folder = os.path.join(settings.MEDIA_ROOT, 'photos')
@@ -93,12 +119,16 @@ def process_photos(request):
     existing_photos = Photo.objects.all().values_list('photo', flat=True)
     existing_photo_files = set([os.path.basename(photo_path) for photo_path in existing_photos])
 
-    # Regex pattern for matching "InstaPics-{id}-(date).jpg"
-    insta_pattern = re.compile(r"InstaPics-(\d+)-\(\d+\)\.jpg")
+    # Updated regex pattern for matching "InstaPics-{id}-{date}.jpg"
+    insta_pattern = re.compile(r"InstaPics-(\d+)-\d{4}-\d{2}-\d{2}\.jpg")
 
     # List all files in the 'photos' folder
     if os.path.exists(media_folder):
         for filename in os.listdir(media_folder):
+            # Skip the .DS_Store file
+            if filename == '.DS_Store':
+                continue
+
             # Check if the file is already in the Photo model
             if filename not in existing_photo_files:
                 # Determine if the filename matches the InstaPics pattern
@@ -110,7 +140,7 @@ def process_photos(request):
 
                     try:
                         # Attempt to find a Photo with the extracted ID
-                        existing_photo = Photo.objects.get(id=photo_id)
+                        existing_photo = Photo.objects.get(number=photo_id)
                         updates.append(f'Found existing photo with ID: {photo_id}.')
 
                         # Update existing photo with filename and date
@@ -130,11 +160,19 @@ def process_photos(request):
                         updates.append(f'Added {filename} as photo {new_photo.number}.')
 
                 else:
-                    # Handle other filenames directly
+                    # Use regular expression to find numbers in filename
+                    match = re.search(r"\d+", filename)
+                    if match:
+                        photo_number = int(match.group(0))
+                    else:
+                        # Handle filenames without numbers
+                        photo_number = Photo.objects.count() + 1  # Fallback for filenames without numbers
+
+                    # Create a new Photo object with the extracted number
                     new_photo = Photo.objects.create(
                         date_taken=date.today(),
                         photo=f'photos/{filename}',
-                        number=Photo.objects.count() + 1  # Use count for non-InstaPics photos
+                        number=photo_number
                     )
                     updates.append(f'Added {filename} as photo {new_photo.number}.')
 
@@ -146,6 +184,7 @@ def process_photos(request):
 
     # Return updates as a simple HTTP response
     return HttpResponse('<br>'.join(updates))
+
 
 def process_csv(request):
     if request.method == 'POST':
@@ -184,17 +223,16 @@ def process_csv(request):
                     photo.gallery = row['Gallery'].upper() == 'TRUE'
 
                     # Set 'collaborated' to True if 'done' is True
-                    if photo.done:
-                        photo.collaborated = True
-                    else:
-                        photo.collaborated = False  # Optional: reset 'collaborated' if 'done' is False
+                    photo.collaborated = photo.done
 
                     # Update or create haiku
                     haiku_text = row['Haiku'].strip()
+                    author = row['Author'].strip() if row['Author'].strip() else 'Unknown Author'  # Default value
+
                     if haiku_text:
                         haiku, created = Haiku.objects.update_or_create(
                             photo=photo,
-                            defaults={'text': haiku_text, 'author': row['Author'].strip()}
+                            defaults={'text': haiku_text, 'author': author}
                         )
 
                     photo.save()
@@ -207,4 +245,3 @@ def process_csv(request):
 
         return render(request, 'process_csv.html', {'updates': updates})
     return render(request, 'process_csv.html')
-

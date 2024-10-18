@@ -6,14 +6,11 @@
     <div class="row">
         {% for haiku in haikus %}
             <div class="col-md-4 mb-4">
-                <!-- Wrap the card in an anchor tag with a custom class -->
-                <a href="{% url 'photo_detail' haiku.photo.id %}" class="card haiku-card" 
-                   style="{% if haiku.photo %} background-image: url('{{ haiku.photo.photo.url }}'); background-size: cover; background-position: center; {% endif %}">
-                    <div class="card-body" style="background-color: rgba(0, 0, 0, 0.6);"> <!-- Slightly transparent background for readability -->
+                <div class="card" style="background-image: url('{{ haiku.photo.url }}'); background-size: cover; background-position: center;">
+                    <div class="card-body">
                         {% if haiku.photo %}
-                            <div class="haiku-image-info">
-                                <img src="{{ haiku.photo.photo.url }}" alt="Haiku Image" class="img-fluid" style="display:none;"> <!-- Keep image for accessibility but hide it -->
-                            </div>
+                            <!-- Optionally, you can display the photo here as well -->
+                            <img src="{{ haiku.photo.url }}" alt="{{ haiku.photo.number }}" class="img-fluid" style="display: none;">
                         {% endif %}
                         {% with haiku.text|split:"/" as lines %}
                             {% if lines|length >= 4 %}
@@ -28,7 +25,7 @@
                             <small class="text-muted">{{ haiku.photo.number }} By {{ haiku.author }}</small>
                         </p>
                     </div>
-                </a> <!-- Close anchor tag -->
+                </div>
             </div>
         {% endfor %}
     </div>
@@ -71,16 +68,4 @@
         </ul>
     </nav>
 </div>
-
-<style>
-    a.haiku-card {
-        text-decoration: none; /* Remove underline */
-        color: inherit; /* Make sure the text color matches the surrounding text */
-    }
-    
-    a.haiku-card:hover {
-        text-decoration: none; /* Keep underline removed on hover */
-    }
-    
-</style>
 {% endblock %}
