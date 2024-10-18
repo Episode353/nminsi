@@ -245,8 +245,6 @@ def process_csv(request):
 
         return render(request, 'process_csv.html', {'updates': updates})
     return render(request, 'process_csv.html')
-<<<<<<< HEAD
-=======
 
 import csv
 from django.http import HttpResponse
@@ -287,4 +285,3 @@ def export_csv(request):
         ])
 
     return response
->>>>>>> e9d958cc82e241571b5635cf910f0e9230753b4d
