@@ -119,8 +119,9 @@
                             <li><a href="{% url 'haikus' %}" class="nav-link px-2">Haikus</a></li>
                             <li><a href="{% url 'haiku_create' %}" class="nav-link px-2">Create a Haiku</a></li>
                                                         <!-- Somewhere in your template -->
-                            <a href="{% url 'process_photos' %}" class="btn btn-primary">Process Photos</a>
-                            <a href="{% url 'process_csv' %}" class="btn btn-primary">Process CSV</a>
+                            <li><a href="{% url 'process_photos' %}" class="nav-link px-2">Process Photos</a></li>
+                            <li><a href="{% url 'process_csv' %}" class="nav-link px-2">Process CSV</a></li>
+                            <li><a href="{% url 'export_csv' %}" class="nav-link px-2">Export CSV</a></li>
 
                         </ul>
                     </div>

@@ -208,3 +208,42 @@ def process_csv(request):
         return render(request, 'process_csv.html', {'updates': updates})
     return render(request, 'process_csv.html')
 
+import csv
+from django.http import HttpResponse
+from .models import Photo, Haiku
+
+def export_csv(request):
+    # Create the HttpResponse object with the appropriate CSV header.
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="photos_export.csv"'
+
+    writer = csv.writer(response)
+
+    # Write CSV headers (adjust this to match your import format)
+    writer.writerow(['#', 'File Name', 'Discard', 'Done', 'Wbord', 'Insta', 'X', 'Folder', 'Gallery', 'Haiku', 'Author'])
+
+    # Query the database for all Photo records
+    photos = Photo.objects.all()
+
+    for photo in photos:
+        # Get associated haiku if it exists
+        haiku = Haiku.objects.filter(photo=photo).first()
+        haiku_text = haiku.text if haiku else ''
+        haiku_author = haiku.author if haiku else ''
+
+        # Write each photo's data into a row (match the import format)
+        writer.writerow([
+            photo.number,
+            photo.photo.name,
+            'TRUE' if photo.discard else 'FALSE',
+            'TRUE' if photo.done else 'FALSE',
+            'TRUE' if photo.wbord else 'FALSE',
+            'TRUE' if photo.insta else 'FALSE',
+            'TRUE' if photo.x else 'FALSE',
+            'TRUE' if photo.folder else 'FALSE',
+            'TRUE' if photo.gallery else 'FALSE',
+            haiku_text,
+            haiku_author
+        ])
+
+    return response
