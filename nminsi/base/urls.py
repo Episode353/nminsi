@@ -13,6 +13,7 @@ urlpatterns = [
     path('fonts/', views.fonts, name='fonts'),
     path('process_photos/', views.process_photos, name='process_photos'),
     path('process_csv/', views.process_csv, name='process_csv'),
+    path('export_csv/', views.export_csv, name='export_csv'),
 ]
 
 
