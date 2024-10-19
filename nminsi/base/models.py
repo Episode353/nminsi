@@ -23,7 +23,13 @@ class Haiku(models.Model):
     number = models.AutoField(primary_key=True)
     text = models.TextField()
     author = models.CharField(max_length=100)
-    photo = models.ForeignKey(Photo, on_delete=models.CASCADE, null=True, blank=True)  # Optional association
+    instagram_tag = models.CharField(max_length=255, blank=True, null=True)  # New field for Instagram tag or URL
+    photo = models.ForeignKey(Photo, null=True, blank=True, on_delete=models.SET_NULL)
 
+    def get_instagram_link(self):
+        if self.instagram_tag.startswith('http'):
+            return self.instagram_tag  # If it's a full link
+        return f"https://www.instagram.com/{self.instagram_tag.lstrip('@')}/"  # If it's a username
+    
     def __str__(self):
-        return f"Haiku {self.number} by {self.author}"
+        return self.text

@@ -3,11 +3,11 @@
 <div class="container mt-5">
     <h1 class="text-center mb-4">Create a Haiku</h1>
 
-    {% if photo%}
+    {% if photo %}
     <!-- Display the selected photo -->
-    <div class="card mb-4">
+    <div class="card mb-4 mx-auto" style="max-width: 600px;">
         <img src="{{ photo.photo.url }}" class="card-img-top" alt="Photo taken on {{ photo.date_taken }}">
-        <div class="card-body">
+        <div class="card-body text-center">
             <h5 class="card-title">Date Taken: {{ photo.date_taken }}</h5>
             <p class="card-text">Photo ID: {{ photo.number }}</p>
             <p class="card-text">Collaborated: {% if photo.collaborated %} Yes {% else %} No {% endif %}</p>
@@ -15,22 +15,31 @@
     </div>
     {% endif %}
 
-    <form method="POST" class="mb-4">
+    <form method="post" class="mx-auto" style="max-width: 600px;">
         {% csrf_token %}
-        <div class="mb-3">
-            <label for="text" class="form-label">Haiku Text</label>
-            <textarea id="text" name="text" class="form-control" rows="3" required></textarea>
+        <div class="form-group mb-3">
+            <label for="text">Haiku Text:</label>
+            <textarea name="text" class="form-control" id="text" rows="3" required></textarea>
         </div>
-        <div class="mb-3">
-            <label for="author" class="form-label">Author</label>
-            <input type="text" id="author" name="author" class="form-control" required>
+        <div class="form-group mb-3">
+            <label for="author">Author:</label>
+            <input type="text" name="author" class="form-control" id="author" required>
         </div>
-        <!-- Use photo.number instead of photo.id -->
-        <input type="hidden" name="photo_number" value="{{ photo.number }}">
-        <button type="submit" class="btn btn-custom">Submit Haiku</button>
+        <div class="form-group mb-3">
+            <label for="instagram_tag">Instagram Tag (Optional):</label>
+            <small class="form-text text-muted">Enter either @username or the full Instagram URL </br> (e.g., https://instagram.com/username)</small>
+            <input type="text" name="instagram_tag" class="form-control" id="instagram_tag" placeholder="@username or full Instagram URL">
+        </div>
+        
+        <div class="form-group mb-4">
+            <label for="photo_number">Photo Number (Optional):</label>
+            <input type="number" name="photo_number" class="form-control" id="photo_number">
+        </div>
+        <button type="submit" class="btn btn-primary w-100 mb-3">Create Haiku</button>
     </form>
-    
 
-    <a href="{% url 'main' %}" class="btn btn-custom">Back to Home</a>
+    <div class="text-center">
+        <a href="{% url 'main' %}" class="btn btn-secondary">Back to Home</a>
+    </div>
 </div>
 {% endblock %}

@@ -1,86 +1,48 @@
 {% extends "base.html" %}
-{% load split_filters %}
 {% block content %}
 <div class="container mt-5">
     <h1>Haikus</h1>
-    <div class="row">
+    
+    <!-- Sorting Options -->
+    <div>
+        <a href="?sort=all" class="btn btn-outline-primary {% if sort_option == 'all' %}active{% endif %}">All Haikus</a>
+        <a href="?sort=with_photo" class="btn btn-outline-primary {% if sort_option == 'with_photo' %}active{% endif %}">With Photos</a>
+        <a href="?sort=without_photo" class="btn btn-outline-primary {% if sort_option == 'without_photo' %}active{% endif %}">Without Photos</a>
+    </div>
+
+    <div class="row mt-4">
         {% for haiku in haikus %}
             <div class="col-md-4 mb-4">
-                <!-- Wrap the card in an anchor tag with a custom class -->
-                <a href="{% url 'photo_detail' haiku.photo.id %}" class="card haiku-card" 
-                   style="{% if haiku.photo %} background-image: url('{{ haiku.photo.photo.url }}'); background-size: cover; background-position: center; {% endif %}">
-                    <div class="card-body" style="background-color: rgba(0, 0, 0, 0.6);"> <!-- Slightly transparent background for readability -->
-                        {% if haiku.photo %}
-                            <div class="haiku-image-info">
-                                <img src="{{ haiku.photo.photo.url }}" alt="Haiku Image" class="img-fluid" style="display:none;"> <!-- Keep image for accessibility but hide it -->
-                            </div>
+                <div class="card haiku-card">
+                    {% if haiku.photo %}
+                        <div class="haiku-image" style="background-image: url('{{ haiku.photo.photo.url }}');"></div>
+                    {% endif %}
+                    <div class="card-body">
+                        <p>{{ haiku.text }}</p>
+                        <p>Author: {{ haiku.author }}</p>
+                        <!-- Instagram Tag -->
+                        {% if haiku.instagram_tag %}
+                            <p>
+                                <a href="{{ haiku.get_instagram_link }}" target="_blank">
+                                    {{ haiku.instagram_tag}}
+                                </a>
+                            </p>
                         {% endif %}
-                        {% with haiku.text|split:"/" as lines %}
-                            {% if lines|length >= 4 %}
-                                <p class="haiku-text">{{ lines.0 }}/{{ lines.1 }}/{{ lines.2 }}/<br>{{ lines.3 }}</p>
-                            {% elif lines|length == 3 %}
-                                <p class="haiku-text">{{ lines.0 }}/<br>{{ lines.1 }}/<br>{{ lines.2 }}</p>
-                            {% else %}
-                                <p class="haiku-text">{{ haiku.text }}</p> <!-- Fallback if haiku doesn't follow the format -->
-                            {% endif %}
-                        {% endwith %}
-                        <p class="haiku-subtext">
-                            <small class="text-muted">{{ haiku.photo.number }} By {{ haiku.author }}</small>
-                        </p>
                     </div>
-                </a> <!-- Close anchor tag -->
+                </div>
             </div>
         {% endfor %}
     </div>
-    
-    <nav aria-label="Page navigation">
-        <ul class="pagination justify-content-center">
-            {% if haikus.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?page=1" aria-label="First">
-                        <span aria-hidden="true">&laquo; First</span>
-                    </a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ haikus.previous_page_number }}">Previous</a>
-                </li>
-            {% endif %}
-    
-            {% for num in haikus.paginator.page_range %}
-                {% if haikus.number == num %}
-                    <li class="page-item active" aria-current="page">
-                        <span class="page-link">{{ num }}</span>
-                    </li>
-                {% elif num > haikus.number|add:-3 and num < haikus.number|add:3 %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-                    </li>
-                {% endif %}
-            {% endfor %}
-    
-            {% if haikus.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ haikus.next_page_number }}">Next</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ haikus.paginator.num_pages }}" aria-label="Last">
-                        <span aria-hidden="true">Last &raquo;</span>
-                    </a>
-                </li>
-            {% endif %}
-        </ul>
-    </nav>
-</div>
 
-<style>
-    a.haiku-card {
-        text-decoration: none; /* Remove underline */
-        color: inherit; /* Make sure the text color matches the surrounding text */
-    }
-    
-    a.haiku-card:hover {
-        text-decoration: none; /* Keep underline removed on hover */
-    }
-    
-</style>
+    <!-- Pagination -->
+    <div class="pagination">
+        {% if haikus.has_previous %}
+            <a href="?page={{ haikus.previous_page_number }}" class="btn btn-outline-secondary">Previous</a>
+        {% endif %}
+        <span class="btn btn-outline-primary">{{ haikus.number }} / {{ haikus.paginator.num_pages }}</span>
+        {% if haikus.has_next %}
+            <a href="?page={{ haikus.next_page_number }}" class="btn btn-outline-secondary">Next</a>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}
