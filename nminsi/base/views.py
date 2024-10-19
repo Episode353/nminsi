@@ -26,7 +26,7 @@ def main(request):
         photo_list = photo_list.order_by('number')  # Default sort by number
 
     # Set up pagination
-    paginator = Paginator(photo_list, 24)  # Display 24 photos per page
+    paginator = Paginator(photo_list, 66)  # Display 24 photos per page
     page_number = request.GET.get('page')
     photos = paginator.get_page(page_number)
 
@@ -47,49 +47,51 @@ import re
 
 
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Photo, Haiku
+from django.core.paginator import Paginator
+from .models import Haiku
+
+def haikus_list(request):
+    sort_option = request.GET.get('sort', 'all')  # Default to 'all'
+    
+    if sort_option == 'with_photo':
+        haikus = Haiku.objects.filter(photo__isnull=False)
+    elif sort_option == 'without_photo':
+        haikus = Haiku.objects.filter(photo__isnull=True)
+    else:
+        haikus = Haiku.objects.all()
+    
+    paginator = Paginator(haikus, 50)  # Display 50 haikus per page
+    page_number = request.GET.get('page')
+    haikus_page = paginator.get_page(page_number)
+    
+    return render(request, 'haikus_list.html', {'haikus': haikus_page, 'sort_option': sort_option})
+
 
 def haiku_create(request):
     if request.method == "POST":
         text = request.POST.get('text')
         author = request.POST.get('author')
-        photo_number = request.POST.get('photo_number')  # Use 'photo_number' instead of 'photo_id'
+        instagram_tag = request.POST.get('instagram_tag')  # New field for Instagram tag
+        photo_number = request.POST.get('photo_number') 
         
-        # Create Haiku without a photo if photo_number is not provided
-        haiku = Haiku(text=text, author=author)
+        haiku = Haiku(text=text, author=author, instagram_tag=instagram_tag)
         if photo_number:
             try:
-                # Use the number field to get the Photo instance
                 photo = Photo.objects.get(number=photo_number)
                 haiku.photo = photo  # Associate the haiku with the photo
             except Photo.DoesNotExist:
-                # Handle the case where the photo does not exist
                 return HttpResponse(f"Photo with number {photo_number} does not exist.")
         
         haiku.save()
-        return redirect('haikus')  # Redirect to the haikus page after saving
-
-    # If GET, retrieve the photo_number from query parameters
+        return redirect('haikus')
+    
     photo_number = request.GET.get('photo_number')
     photo = None
     if photo_number:
-        photo = get_object_or_404(Photo, number=photo_number)  # Ensure the photo exists
+        photo = get_object_or_404(Photo, number=photo_number)
 
-    return render(request, 'haiku_create.html', {'photo': photo})  # Pass the photo to the template (if exists)
+    return render(request, 'haiku_create.html', {'photo': photo})
 
-
-
-
-from django.shortcuts import render
-from django.core.paginator import Paginator
-from .models import Haiku
-
-def haikus_list(request):
-    haikus = Haiku.objects.all()
-    paginator = Paginator(haikus, 50)  # Display 10 haikus per page
-    page_number = request.GET.get('page')
-    haikus_page = paginator.get_page(page_number)
-    return render(request, 'haikus_list.html', {'haikus': haikus_page})
 
 
 
@@ -98,9 +100,6 @@ def photo_detail(request, photo_id):
     haikus = Haiku.objects.filter(photo=photo)  # Get haikus associated with the photo
     return render(request, 'photo_detail.html', {'photo': photo, 'haikus': haikus})  # Pass haikus to the template
 
-
-def fonts(request):
-    return render(request, 'fonts.html')
 
 import os
 from django.conf import settings
@@ -227,7 +226,7 @@ def process_csv(request):
 
                     # Update or create haiku
                     haiku_text = row['Haiku'].strip()
-                    author = row['Author'].strip() if row['Author'].strip() else 'Unknown Author'  # Default value
+                    author = row['Author'].strip() if row['Author'].strip() else 'N. Minsi'  # Default value
 
                     if haiku_text:
                         haiku, created = Haiku.objects.update_or_create(
