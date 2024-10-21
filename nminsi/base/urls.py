@@ -14,8 +14,5 @@ urlpatterns = [
     path('process_csv/', views.process_csv, name='process_csv'),
     path('export_csv/', views.export_csv, name='export_csv'),
 ]
-
-
-if settings.DEBUG:
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)  # Add this line for serving media files
+# Serve media files in production if DEBUG is False
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
