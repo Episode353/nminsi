@@ -1,14 +1,18 @@
+import os
+import csv
+import re
+from datetime import date
+
+from django.conf import settings
+from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator
+from django.contrib.auth.decorators import user_passes_test
+
 from .models import Photo, Haiku
 
-from django.shortcuts import render
-from django.core.paginator import Paginator
-from .models import Photo
-
-from django.shortcuts import render
-from django.core.paginator import Paginator
-from .models import Photo
+def is_staff(user):
+    return user.is_staff
 
 def main(request):
     # Fetch all photos from the database
@@ -17,63 +21,44 @@ def main(request):
     # Handle sorting
     sort_option = request.GET.get('sort', 'number')  # Default to 'number'
     if sort_option == 'date':
-        photo_list = photo_list.order_by('date_taken')  # Sort by date taken
+        photo_list = photo_list.order_by('date_taken')
     elif sort_option == 'collaborated':
-        photo_list = photo_list.filter(collaborated=True).order_by('number')  # Sort by collaborated status
+        photo_list = photo_list.filter(collaborated=True).order_by('number')
     elif sort_option == 'not_collaborated':
-        photo_list = photo_list.filter(collaborated=False).order_by('number')  # Sort by not collaborated status
+        photo_list = photo_list.filter(collaborated=False).order_by('number')
     else:
-        photo_list = photo_list.order_by('number')  # Default sort by number
+        photo_list = photo_list.order_by('number')
 
     # Set up pagination
-    paginator = Paginator(photo_list, 66)  # Display 24 photos per page
+    paginator = Paginator(photo_list, 66)  # Display 66 photos per page
     page_number = request.GET.get('page')
     photos = paginator.get_page(page_number)
 
     return render(request, 'index.html', {'photos': photos, 'request': request})
 
-
-
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import Photo, Haiku
-
-import os
-import csv  # Add this line
-from django.conf import settings
-from django.http import HttpResponse
-from .models import Photo
-from datetime import date
-import re
-
-
-from django.shortcuts import render, get_object_or_404, redirect
-from django.core.paginator import Paginator
-from .models import Haiku
-
 def haikus_list(request):
     sort_option = request.GET.get('sort', 'all')  # Default to 'all'
-    
+
     if sort_option == 'with_photo':
         haikus = Haiku.objects.filter(photo__isnull=False)
     elif sort_option == 'without_photo':
         haikus = Haiku.objects.filter(photo__isnull=True)
     else:
         haikus = Haiku.objects.all()
-    
+
     paginator = Paginator(haikus, 50)  # Display 50 haikus per page
     page_number = request.GET.get('page')
     haikus_page = paginator.get_page(page_number)
-    
-    return render(request, 'haikus_list.html', {'haikus': haikus_page, 'sort_option': sort_option})
 
+    return render(request, 'haikus_list.html', {'haikus': haikus_page, 'sort_option': sort_option})
 
 def haiku_create(request):
     if request.method == "POST":
         text = request.POST.get('text')
         author = request.POST.get('author')
-        instagram_tag = request.POST.get('instagram_tag')  # New field for Instagram tag
-        photo_number = request.POST.get('photo_number') 
-        
+        instagram_tag = request.POST.get('instagram_tag')
+        photo_number = request.POST.get('photo_number')
+
         haiku = Haiku(text=text, author=author, instagram_tag=instagram_tag)
         if photo_number:
             try:
@@ -81,10 +66,10 @@ def haiku_create(request):
                 haiku.photo = photo  # Associate the haiku with the photo
             except Photo.DoesNotExist:
                 return HttpResponse(f"Photo with number {photo_number} does not exist.")
-        
+
         haiku.save()
         return redirect('haikus')
-    
+
     photo_number = request.GET.get('photo_number')
     photo = None
     if photo_number:
@@ -92,103 +77,71 @@ def haiku_create(request):
 
     return render(request, 'haiku_create.html', {'photo': photo})
 
-
-
-
 def photo_detail(request, photo_id):
     photo = get_object_or_404(Photo, id=photo_id)
     haikus = Haiku.objects.filter(photo=photo)  # Get haikus associated with the photo
-    return render(request, 'photo_detail.html', {'photo': photo, 'haikus': haikus})  # Pass haikus to the template
+    return render(request, 'photo_detail.html', {'photo': photo, 'haikus': haikus})
 
-
-import os
-from django.conf import settings
-from django.http import HttpResponse
-from .models import Photo
-from datetime import date
-import re
+@user_passes_test(is_staff)
 def process_photos(request):
-    # Path to the folder containing photos
     media_folder = os.path.join(settings.MEDIA_ROOT, 'photos')
-
-    # Initialize an empty list to store update messages
     updates = []
 
-    # Get all existing Photo objects
     existing_photos = Photo.objects.all().values_list('photo', flat=True)
     existing_photo_files = set([os.path.basename(photo_path) for photo_path in existing_photos])
-
-    # Updated regex pattern for matching "InstaPics-{id}-{date}.jpg"
     insta_pattern = re.compile(r"InstaPics-(\d+)-\d{4}-\d{2}-\d{2}\.jpg")
 
-    # List all files in the 'photos' folder
     if os.path.exists(media_folder):
         for filename in os.listdir(media_folder):
-            # Skip the .DS_Store file
             if filename == '.DS_Store':
                 continue
 
-            # Check if the file is already in the Photo model
             if filename not in existing_photo_files:
-                # Determine if the filename matches the InstaPics pattern
                 insta_match = insta_pattern.match(filename)
 
                 if insta_match:
-                    # Extract the ID from the regex match
-                    photo_id = int(insta_match.group(1))  # Ensure ID is an integer
+                    photo_id = int(insta_match.group(1))
 
                     try:
-                        # Attempt to find a Photo with the extracted ID
                         existing_photo = Photo.objects.get(number=photo_id)
                         updates.append(f'Found existing photo with ID: {photo_id}.')
-
-                        # Update existing photo with filename and date
                         existing_photo.photo = f'photos/{filename}'
                         existing_photo.date_taken = date.today()
                         existing_photo.save()
-                        continue  # Skip creating a new photo since it exists
+                        continue
 
                     except Photo.DoesNotExist:
-                        # If photo with ID doesn't exist, create a new one
-                        updates.append(f'InstaPics pattern found, ID: {photo_id}. Photo not found. Creating new.')
+                        updates.append(f'InstaPics pattern found, ID: {photo_id}. Creating new.')
                         new_photo = Photo.objects.create(
                             date_taken=date.today(),
                             photo=f'photos/{filename}',
-                            number=photo_id  # Use extracted ID as number
+                            number=photo_id
                         )
                         updates.append(f'Added {filename} as photo {new_photo.number}.')
 
                 else:
-                    # Use regular expression to find numbers in filename
                     match = re.search(r"\d+", filename)
-                    if match:
-                        photo_number = int(match.group(0))
-                    else:
-                        # Handle filenames without numbers
-                        photo_number = Photo.objects.count() + 1  # Fallback for filenames without numbers
+                    photo_number = int(match.group(0)) if match else Photo.objects.count() + 1
 
-                    # Create a new Photo object with the extracted number
                     new_photo = Photo.objects.create(
                         date_taken=date.today(),
                         photo=f'photos/{filename}',
                         number=photo_number
                     )
                     updates.append(f'Added {filename} as photo {new_photo.number}.')
-
             else:
                 updates.append(f'{filename} already exists in the database.')
 
     else:
         updates.append("Media folder does not exist.")
 
-    # Return updates as a simple HTTP response
     return HttpResponse('<br>'.join(updates))
 
-
+@user_passes_test(is_staff)
 def process_csv(request):
     if request.method == 'POST':
         csv_file = request.FILES['csv_file']
-        
+
         if not csv_file.name.endswith('.csv'):
             return HttpResponse('This is not a CSV file.')
 
@@ -199,20 +152,17 @@ def process_csv(request):
         for row in reader:
             file_name = row['File Name'].strip()
             photo_number = None
-            
+
             if file_name.startswith("Instapics-"):
                 parts = file_name.split('-')
                 if len(parts) >= 3:
-                    photo_number = int(parts[1])  # Extract ID as integer from filename
+                    photo_number = int(parts[1])
             elif row['#'].strip().isdigit():
-                photo_number = int(row['#'].strip())  # Use row number if applicable
+                photo_number = int(row['#'].strip())
 
             if photo_number is not None:
                 try:
-                    # Fetch the Photo by its number
                     photo = Photo.objects.get(number=photo_number)
-
-                    # Update photo attributes
                     photo.discard = row['Discard'].upper() == 'TRUE'
                     photo.done = row['Done'].upper() == 'TRUE'
                     photo.wbord = row['Wbord'].upper() == 'TRUE'
@@ -220,16 +170,13 @@ def process_csv(request):
                     photo.x = row['X'].upper() == 'TRUE'
                     photo.folder = row['Folder'].upper() == 'TRUE'
                     photo.gallery = row['Gallery'].upper() == 'TRUE'
-
-                    # Set 'collaborated' to True if 'done' is True
                     photo.collaborated = photo.done
 
-                    # Update or create haiku
                     haiku_text = row['Haiku'].strip()
-                    author = row['Author'].strip() if row['Author'].strip() else 'N. Minsi'  # Default value
+                    author = row['Author'].strip() or 'N. Minsi'
 
                     if haiku_text:
-                        haiku, created = Haiku.objects.update_or_create(
+                        Haiku.objects.update_or_create(
                             photo=photo,
                             defaults={'text': haiku_text, 'author': author}
                         )
@@ -243,32 +190,24 @@ def process_csv(request):
                     updates.append(f"Multiple photos found for number {photo_number}.")
 
         return render(request, 'process_csv.html', {'updates': updates})
+
     return render(request, 'process_csv.html')
 
-import csv
-from django.http import HttpResponse
-from .models import Photo, Haiku
-
+@user_passes_test(is_staff)
 def export_csv(request):
-    # Create the HttpResponse object with the appropriate CSV header.
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="photos_export.csv"'
 
     writer = csv.writer(response)
-
-    # Write CSV headers (adjust this to match your import format)
     writer.writerow(['#', 'File Name', 'Discard', 'Done', 'Wbord', 'Insta', 'X', 'Folder', 'Gallery', 'Haiku', 'Author'])
 
-    # Query the database for all Photo records
     photos = Photo.objects.all()
 
     for photo in photos:
-        # Get associated haiku if it exists
         haiku = Haiku.objects.filter(photo=photo).first()
         haiku_text = haiku.text if haiku else ''
         haiku_author = haiku.author if haiku else ''
 
-        # Write each photo's data into a row (match the import format)
         writer.writerow([
             photo.number,
             photo.photo.name,

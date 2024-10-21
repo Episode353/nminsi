@@ -40,7 +40,7 @@
             font-family: FrankRuhlLibre-Black;
             background-color: black;  /* Dark background */
             color: white;  /* Light text color for body */
-            padding-top: 60px; /* Add padding to prevent content from hiding behind fixed header */
+            padding-top: 7rem; /* Add padding to prevent content from hiding behind fixed header */
         }
 
         .card {
@@ -196,10 +196,6 @@
                             <li><a href="{% url 'main' %}" class="nav-link px-2">Home</a></li>
                             <li><a href="{% url 'haikus' %}" class="nav-link px-2">Haikus</a></li>
                             <li><a href="{% url 'haiku_create' %}" class="nav-link px-2">Create a Haiku</a></li>
-                                                        <!-- Somewhere in your template -->
-                            <li><a href="{% url 'process_photos' %}" class="nav-link px-2">Process Photos</a></li>
-                            <li><a href="{% url 'process_csv' %}" class="nav-link px-2">Process CSV</a></li>
-                            <li><a href="{% url 'export_csv' %}" class="nav-link px-2">Export CSV</a></li>
 
                         </ul>
                     </div>
