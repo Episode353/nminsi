@@ -14,6 +14,7 @@ class Photo(models.Model):
     x = models.BooleanField(default=False)
     folder = models.BooleanField(default=False)
     gallery = models.BooleanField(default=False)
+    photographer = models.CharField(max_length=100, default='N. Minsi')
 
     def __str__(self):
         return f"Photo {self.number} taken on {self.date_taken}"
