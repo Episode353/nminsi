@@ -24,9 +24,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-qsu!4r+j7t+%ay_2=l7$^@)^l3^snnr!0iwp*46m#lbc5nop70'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['nminsi.toscano.website']
+
+CSRF_TRUSTED_ORIGINS = ["https://nminsi.toscano.website"]
+
+
 
 
 
