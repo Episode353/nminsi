@@ -30,7 +30,7 @@ def main(request):
         photo_list = photo_list.order_by('number')
 
     # Set up pagination
-    paginator = Paginator(photo_list, 66)  # Display 66 photos per page
+    paginator = Paginator(photo_list, 45)  # Display 66 photos per page
     page_number = request.GET.get('page')
     photos = paginator.get_page(page_number)
 
