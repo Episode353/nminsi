@@ -171,6 +171,7 @@ def process_csv(request):
                     photo.folder = row['Folder'].upper() == 'TRUE'
                     photo.gallery = row['Gallery'].upper() == 'TRUE'
                     photo.collaborated = photo.done
+                    photo.photographer = row['Photographer'].strip()  # Add this line
 
                     haiku_text = row['Haiku'].strip()
                     author = row['Author'].strip() or 'N. Minsi'
@@ -199,7 +200,7 @@ def export_csv(request):
     response['Content-Disposition'] = 'attachment; filename="photos_export.csv"'
 
     writer = csv.writer(response)
-    writer.writerow(['#', 'File Name', 'Discard', 'Done', 'Wbord', 'Insta', 'X', 'Folder', 'Gallery', 'Haiku', 'Author'])
+    writer.writerow(['#', 'File Name', 'Discard', 'Done', 'Wbord', 'Insta', 'X', 'Folder', 'Gallery', 'Haiku', 'Author', 'Photographer'])
 
     photos = Photo.objects.all()
 
@@ -219,7 +220,8 @@ def export_csv(request):
             'TRUE' if photo.folder else 'FALSE',
             'TRUE' if photo.gallery else 'FALSE',
             haiku_text,
-            haiku_author
+            haiku_author,
+            photo.photographer  # Add photographer to the export
         ])
 
     return response
