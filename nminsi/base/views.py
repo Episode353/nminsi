@@ -13,8 +13,7 @@ from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 
 from .models import Photo, Haiku
 
-def is_staff(user):
-    return user.is_staff
+
 
 def main(request):
     # Fetch all photos from the database
@@ -57,24 +56,55 @@ def haikus_list(request):
 
     return render(request, 'haikus_list.html', {'haikus': haikus_page, 'sort_option': sort_option})
 
-def haiku_create(request):
-    if request.method == "POST":
-        text = request.POST.get('text')
-        author = request.POST.get('author')
-        instagram_tag = request.POST.get('instagram_tag')
-        photo_number = request.POST.get('photo_number')
+from .models import Haiku, Photo, Profile
+from django.contrib.auth.decorators import login_required
 
-        haiku = Haiku(text=text, author=author, instagram_tag=instagram_tag)
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponse
+from .models import Haiku, Photo, Profile
+
+@login_required
+def haiku_create(request):
+    # Handle POST request for haiku creation
+    if request.method == "POST":
+        # Get the user's profile, or create it if it doesn't exist
+        profile, created = Profile.objects.get_or_create(user=request.user)
+
+        # Extract haiku text from POST data
+        text = request.POST.get('text')
+        
+        # Get the photo number from the form or URL
+        photo_number = request.POST.get('photo_number') or request.GET.get('photo_number')
+
+        # Get author name from the user's profile or use the username
+        author_name = profile.author_name if profile.author_name else request.user.username
+        instagram_tag = profile.instagram_handle
+
+        # Create a Haiku object with the provided data
+        haiku = Haiku(text=text, author=author_name, instagram_tag=instagram_tag)
+
+        # Associate the Haiku with a photo if a valid photo_number is provided
+        photo = None  # Initialize photo here
         if photo_number:
             try:
                 photo = Photo.objects.get(number=photo_number)
-                haiku.photo = photo  # Associate the haiku with the photo
+                haiku.photo = photo
             except Photo.DoesNotExist:
                 return HttpResponse(f"Photo with number {photo_number} does not exist.")
 
+        # Save the Haiku
         haiku.save()
-        return redirect('haikus')
 
+        # Redirect to the haikus list page
+        # Check if photo is not None before accessing its id
+        if photo is not None:
+            return redirect('photo_detail', photo_id=photo.id)
+        else:
+            # Redirect to a different page if there's no photo associated
+            return redirect('haikus')  # Or any other appropriate page
+
+    # Handle GET request to pre-fill the form with the selected photo
     photo_number = request.GET.get('photo_number')
     photo = None
     if photo_number:
@@ -82,12 +112,15 @@ def haiku_create(request):
 
     return render(request, 'haiku_create.html', {'photo': photo})
 
+
+
+
 def photo_detail(request, photo_id):
     photo = get_object_or_404(Photo, id=photo_id)
     haikus = Haiku.objects.filter(photo=photo)  # Get haikus associated with the photo
     return render(request, 'photo_detail.html', {'photo': photo, 'haikus': haikus})
 
-@user_passes_test(is_staff)
+@login_required
 def process_photos(request):
     media_folder = os.path.join(settings.MEDIA_ROOT, 'photos')
     updates = []
@@ -142,7 +175,7 @@ def process_photos(request):
 
     return HttpResponse('<br>'.join(updates))
 
-@user_passes_test(is_staff)
+@login_required
 def process_csv(request):
     if request.method == 'POST':
         csv_file = request.FILES['csv_file']
@@ -166,46 +199,50 @@ def process_csv(request):
                 photo_number = int(row['#'].strip())
 
             if photo_number is not None:
-                try:
-                    photo = Photo.objects.get(number=photo_number)
-                    photo.discard = row['Discard'].upper() == 'TRUE'
-                    photo.done = row['Done'].upper() == 'TRUE'
-                    photo.wbord = row['Wbord'].upper() == 'TRUE'
-                    photo.insta = row['Insta'].upper() == 'TRUE'
-                    photo.x = row['X'].upper() == 'TRUE'
-                    photo.folder = row['Folder'].upper() == 'TRUE'
-                    photo.gallery = row['Gallery'].upper() == 'TRUE'
-                    photo.collaborated = photo.done
-                    photo.photographer = row['Photographer'].strip()  # Add this line
-
-                    haiku_text = row['Haiku'].strip()
-                    author = row['Author'].strip() or 'N. Minsi'
-
-                    if haiku_text:
-                        Haiku.objects.update_or_create(
-                            photo=photo,
-                            defaults={'text': haiku_text, 'author': author}
-                        )
-
-                    photo.save()
-                    updates.append(f"Updated photo number {photo_number} successfully.")
-
-                except Photo.DoesNotExist:
+                photo = Photo.objects.filter(number=photo_number).first()
+                if photo is None:
                     updates.append(f"Photo number {photo_number} does not exist.")
-                except Photo.MultipleObjectsReturned:
-                    updates.append(f"Multiple photos found for number {photo_number}.")
+                    continue
+
+                photo.discard = row['Discard'].upper() == 'TRUE'
+                photo.done = row['Done'].upper() == 'TRUE'
+                photo.wbord = row['Wbord'].upper() == 'TRUE'
+                photo.insta = row['Insta'].upper() == 'TRUE'
+                photo.x = row['X'].upper() == 'TRUE'
+                photo.folder = row['Folder'].upper() == 'TRUE'
+                photo.gallery = row['Gallery'].upper() == 'TRUE'
+                photo.collaborated = photo.done
+                photo.photographer = row['Photographer'].strip()
+
+                haiku_text = row['Haiku'].strip()
+                author = row['Author'].strip() or 'N. Minsi'
+                instagram_tag = row['Instagram Tag'].strip()  # Read Instagram tag from the CSV
+
+                if haiku_text:
+                    haiku, created = Haiku.objects.filter(photo=photo).first(), False
+                    if haiku is None:
+                        haiku = Haiku(photo=photo, text=haiku_text, author=author, instagram_tag=instagram_tag)
+                    else:
+                        haiku.text = haiku_text
+                        haiku.author = author
+                        haiku.instagram_tag = instagram_tag  # Update the Instagram tag
+                    haiku.save()
+
+                photo.save()
+                updates.append(f"Updated photo number {photo_number} successfully.")
 
         return render(request, 'process_csv.html', {'updates': updates})
 
     return render(request, 'process_csv.html')
 
-@user_passes_test(is_staff)
+
+@login_required
 def export_csv(request):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="photos_export.csv"'
 
     writer = csv.writer(response)
-    writer.writerow(['#', 'File Name', 'Discard', 'Done', 'Wbord', 'Insta', 'X', 'Folder', 'Gallery', 'Haiku', 'Author', 'Photographer'])
+    writer.writerow(['#', 'File Name', 'Discard', 'Done', 'Wbord', 'Insta', 'X', 'Folder', 'Gallery', 'Haiku', 'Author', 'Photographer', 'Instagram Tag'])  # Add Instagram Tag header
 
     photos = Photo.objects.all()
 
@@ -213,6 +250,7 @@ def export_csv(request):
         haiku = Haiku.objects.filter(photo=photo).first()
         haiku_text = haiku.text if haiku else ''
         haiku_author = haiku.author if haiku else ''
+        instagram_tag = haiku.instagram_tag if haiku else ''  # Get the Instagram tag
 
         writer.writerow([
             photo.number,
@@ -226,14 +264,12 @@ def export_csv(request):
             'TRUE' if photo.gallery else 'FALSE',
             haiku_text,
             haiku_author,
-            photo.photographer  # Add photographer to the export
+            photo.photographer,  # Add photographer to the export
+            instagram_tag  # Include the Instagram tag in the export
         ])
 
     return response
 
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.forms import AuthenticationForm
-from django.contrib import messages
 
 def user_login(request):
     if request.method == 'POST':

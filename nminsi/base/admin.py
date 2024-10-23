@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Photo, Haiku
+from .models import Photo, Haiku, Profile
 
 class PhotoAdmin(admin.ModelAdmin):
     list_display = ('number', 'date_taken', 'collaborated', 'discard', 'done', 'wbord', 'insta', 'x', 'folder', 'gallery')
@@ -14,3 +14,4 @@ class HaikuAdmin(admin.ModelAdmin):
 # Register models with the custom admin classes
 admin.site.register(Photo, PhotoAdmin)
 admin.site.register(Haiku, HaikuAdmin)
+admin.site.register(Profile)

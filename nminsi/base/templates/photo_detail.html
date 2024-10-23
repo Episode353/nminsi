@@ -24,9 +24,12 @@
             <h2 class="mb-4">Haiku(s):</h2>
             <div class="list-group">
                 {% for haiku in haikus %}
-                    <a href="#" class="list-group-item list-group-item-action">
+                    <a href="{{ haiku.get_instagram_link }}" class="list-group-item list-group-item-action">
                         <p class="mb-1">{{ haiku.text }}</p>
                         <small>Author: {{ haiku.author }}</small>
+                        {% if haiku.instagram_tag %}
+                    </br>{{ haiku.instagram_tag }}
+                        {% endif %}
                     </a>
                 {% empty %}
                     <div class="list-group-item">No haikus associated with this photo.</div>
