@@ -3,14 +3,16 @@
 {% block content %}
 <div class="container mt-5">
 
-    <!-- Sorting Options as a Bootstrap Dropdown -->
     <div class="dropdown mb-3">
         <button class="btn btn-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-            Sort by: {{ request.GET.sort|default:"Number" }}
+            Sort by: {{ request.GET.sort|default:"Number (Asc)" }}
         </button>
         <ul class="dropdown-menu" aria-labelledby="sortDropdown">
             <li>
-                <a class="dropdown-item" href="?sort=number&page=1">Number</a>
+                <a class="dropdown-item" href="?sort=number_asc&page=1">Number (Asc)</a>
+            </li>
+            <li>
+                <a class="dropdown-item" href="?sort=number_desc&page=1">Number (Desc)</a>
             </li>
             <li>
                 <a class="dropdown-item" href="?sort=date&page=1">Date Taken</a>
@@ -23,6 +25,7 @@
             </li>
         </ul>
     </div>
+    
 
     <div class="row">
         {% for photo in photos %}

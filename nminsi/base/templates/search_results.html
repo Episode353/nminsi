@@ -1,0 +1,67 @@
+<!-- search_results.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="container mt-5">
+    <h1>Search Results for "{{ query }}"</h1>
+
+    {% if photos %}
+        <div class="row">
+            {% for photo in photos %}
+                <div class="col-md-4 mb-4">
+                    <div class="seasonal-content-box">
+                        <a href="{% url 'photo_detail' photo.id %}">
+                            <span class="fg-image-wrap">
+                                <img src="{{ photo.photo.url }}" class="img-fluid max-image-size" alt="Photo {{ photo.number }}">
+                                <div class="photo-number">{{ photo.number }}</div>
+                            </span>
+                        </a>
+                        <p class="text-center">Photographer: {{ photo.photographer }}</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination Section -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if photos.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1&sort={{ request.GET.sort }}" aria-label="First">
+                            <span aria-hidden="true">&laquo; First</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ photos.previous_page_number }}&sort={{ request.GET.sort }}">Previous</a>
+                    </li>
+                {% endif %}
+
+                {% for num in photos.paginator.page_range %}
+                    {% if photos.number == num %}
+                        <li class="page-item active" aria-current="page">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > photos.number|add:-3 and num < photos.number|add:3 %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}&sort={{ request.GET.sort }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if photos.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ photos.next_page_number }}&sort={{ request.GET.sort }}">Next</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ photos.paginator.num_pages }}&sort={{ request.GET.sort }}" aria-label="Last">
+                            <span aria-hidden="true">Last &raquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% else %}
+        <p>No photos found matching your search.</p>
+    {% endif %}
+</div>
+{% endblock %}

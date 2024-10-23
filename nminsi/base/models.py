@@ -1,6 +1,6 @@
 from django.db import models
-
-from django.db import models
+import os
+from django.conf import settings
 
 class Photo(models.Model):
     date_taken = models.DateField()
@@ -18,6 +18,14 @@ class Photo(models.Model):
 
     def __str__(self):
         return f"Photo {self.number} taken on {self.date_taken}"
+
+    def delete(self, *args, **kwargs):
+        # First delete the photo file from the media folder
+        if self.photo and os.path.isfile(self.photo.path):
+            os.remove(self.photo.path)
+        # Call the parent class delete method to delete the object from the database
+        super().delete(*args, **kwargs)
+
 
 
 class Haiku(models.Model):

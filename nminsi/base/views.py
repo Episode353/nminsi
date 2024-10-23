@@ -8,6 +8,8 @@ from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 
 from .models import Photo, Haiku
 
@@ -19,22 +21,25 @@ def main(request):
     photo_list = Photo.objects.all()
 
     # Handle sorting
-    sort_option = request.GET.get('sort', 'number')  # Default to 'number'
+    sort_option = request.GET.get('sort', 'number_asc')  # Default to 'number ascending'
     if sort_option == 'date':
         photo_list = photo_list.order_by('date_taken')
     elif sort_option == 'collaborated':
         photo_list = photo_list.filter(collaborated=True).order_by('number')
     elif sort_option == 'not_collaborated':
         photo_list = photo_list.filter(collaborated=False).order_by('number')
+    elif sort_option == 'number_desc':
+        photo_list = photo_list.order_by('-number')  # Sort by number descending
     else:
-        photo_list = photo_list.order_by('number')
+        photo_list = photo_list.order_by('number')  # Sort by number ascending
 
     # Set up pagination
-    paginator = Paginator(photo_list, 45)  # Display 66 photos per page
+    paginator = Paginator(photo_list, 45)  # Display 45 photos per page
     page_number = request.GET.get('page')
     photos = paginator.get_page(page_number)
 
     return render(request, 'index.html', {'photos': photos, 'request': request})
+
 
 def haikus_list(request):
     sort_option = request.GET.get('sort', 'all')  # Default to 'all'
@@ -225,3 +230,78 @@ def export_csv(request):
         ])
 
     return response
+
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib import messages
+
+def user_login(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user)
+                messages.success(request, 'Logged in successfully.')
+                return redirect('main')  # Redirect to the main page
+            else:
+                messages.error(request, 'Invalid username or password.')
+    else:
+        form = AuthenticationForm()
+    return render(request, 'login.html', {'form': form})
+
+def user_logout(request):
+    logout(request)
+    messages.success(request, 'Logged out successfully.')
+    return redirect('main')  # Redirect to the login page
+
+# views.py
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib import messages
+from django.shortcuts import render, redirect
+
+@login_required
+def change_password(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)  # Important to keep the user logged in after password change
+            messages.success(request, 'Your password was successfully updated!')
+            return redirect('change_password')  # Redirect to the same page or any other page you prefer
+    else:
+        form = PasswordChangeForm(request.user)
+    
+    return render(request, 'change_password.html', {'form': form})
+
+from django.db.models import Q
+
+def photo_search(request):
+    query = request.GET.get('q', '')  # Get the search query from the GET request
+    photos = []
+    
+    if query:
+        # Search for matching photos and haikus
+        photos = Photo.objects.filter(
+            Q(number__icontains=query) |
+            Q(photographer__icontains=query) |
+            Q(haiku__text__icontains=query) |
+            Q(haiku__author__icontains=query)
+        ).distinct()  # Use distinct() to avoid duplicate photos
+
+    return render(request, 'search_results.html', {'photos': photos, 'query': query})
+
+import random
+from django.shortcuts import redirect
+
+def random_photo(request):
+    photo_count = Photo.objects.count()
+    if photo_count > 0:
+        random_index = random.randint(0, photo_count - 1)
+        random_photo = Photo.objects.all()[random_index]
+        return redirect('photo_detail', photo_id=random_photo.id)
+    else:
+        return redirect('main')  # If no photos exist, redirect to the main page
