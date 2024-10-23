@@ -2,12 +2,23 @@
 {% block content %}
 <div class="container mt-5">
     <h1>Haikus</h1>
-    
+
     <!-- Sorting Options -->
-    <div>
-        <a href="?sort=all" class="btn btn-outline-primary {% if sort_option == 'all' %}active{% endif %}">All Haikus</a>
-        <a href="?sort=with_photo" class="btn btn-outline-primary {% if sort_option == 'with_photo' %}active{% endif %}">With Photos</a>
-        <a href="?sort=without_photo" class="btn btn-outline-primary {% if sort_option == 'without_photo' %}active{% endif %}">Without Photos</a>
+    <div class="dropdown mb-3">
+        <button class="btn btn-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            Sort by: {{ sort_option|default:"All" }}
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="sortDropdown">
+            <li>
+                <a class="dropdown-item {% if sort_option == 'all' %}active{% endif %}" href="?sort=all&page=1">All Haikus</a>
+            </li>
+            <li>
+                <a class="dropdown-item {% if sort_option == 'with_photo' %}active{% endif %}" href="?sort=with_photo&page=1">With Photos</a>
+            </li>
+            <li>
+                <a class="dropdown-item {% if sort_option == 'without_photo' %}active{% endif %}" href="?sort=without_photo&page=1">Without Photos</a>
+            </li>
+        </ul>
     </div>
 
     <div class="row mt-4">
@@ -20,7 +31,6 @@
                     <div class="card-body">
                         <p>{{ haiku.text }}</p>
                         <p>Author: {{ haiku.author }}</p>
-                        <!-- Instagram Tag -->
                         {% if haiku.instagram_tag %}
                             <p>
                                 <a href="{{ haiku.get_instagram_link }}" target="_blank">
@@ -34,19 +44,46 @@
         {% endfor %}
     </div>
 
-    <!-- Pagination -->
-    <div class="pagination">
-        {% if haikus.has_previous %}
-            <a href="?page={{ haikus.previous_page_number }}" class="btn btn-outline-secondary">Previous</a>
-        {% endif %}
-        <span class="btn btn-outline-primary">{{ haikus.number }} / {{ haikus.paginator.num_pages }}</span>
-        {% if haikus.has_next %}
-            <a href="?page={{ haikus.next_page_number }}" class="btn btn-outline-secondary">Next</a>
-        {% endif %}
-    </div>
+    <!-- Pagination Section -->
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            {% if haikus.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1&sort={{ sort_option }}" aria-label="First">
+                        <span aria-hidden="true">&laquo; First</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ haikus.previous_page_number }}&sort={{ sort_option }}">Previous</a>
+                </li>
+            {% endif %}
+
+            {% for num in haikus.paginator.page_range %}
+                {% if haikus.number == num %}
+                    <li class="page-item active" aria-current="page">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% elif num > haikus.number|add:-3 and num < haikus.number|add:3 %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}&sort={{ sort_option }}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if haikus.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ haikus.next_page_number }}&sort={{ sort_option }}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ haikus.paginator.num_pages }}&sort={{ sort_option }}" aria-label="Last">
+                        <span aria-hidden="true">Last &raquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
 </div>
 
-<!-- Add missing CSS styles -->
 <style>
     .haiku-image {
         width: 100%;
