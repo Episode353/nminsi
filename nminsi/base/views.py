@@ -51,7 +51,7 @@ def haikus_list(request):
     else:
         haikus = Haiku.objects.all()
 
-    paginator = Paginator(haikus, 50)  # Display 50 haikus per page
+    paginator = Paginator(haikus, 20)  # Display 20 haikus per page
     page_number = request.GET.get('page')
     haikus_page = paginator.get_page(page_number)
 
