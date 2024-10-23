@@ -28,7 +28,7 @@ DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
-CSRF_TRUSTED_ORIGINS = ["https://nminsi.toscano.website"]
+CSRF_TRUSTED_ORIGINS = ["https://nminsipartners.com"]
 
 
 
