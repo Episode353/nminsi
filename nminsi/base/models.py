@@ -27,7 +27,6 @@ class Photo(models.Model):
         super().delete(*args, **kwargs)
 
 
-
 class Haiku(models.Model):
     number = models.AutoField(primary_key=True)
     text = models.TextField()
@@ -36,12 +35,15 @@ class Haiku(models.Model):
     photo = models.ForeignKey(Photo, null=True, blank=True, on_delete=models.SET_NULL)
 
     def get_instagram_link(self):
-        if self.instagram_tag.startswith('http'):
-            return self.instagram_tag  # If it's a full link
-        return f"https://www.instagram.com/{self.instagram_tag.lstrip('@')}/"  # If it's a username
-    
+        if self.instagram_tag:  # Check if instagram_tag is not None or empty
+            if self.instagram_tag.startswith('http'):
+                return self.instagram_tag  # If it's a full link
+            return f"https://www.instagram.com/{self.instagram_tag.lstrip('@')}/"  # If it's a username
+        return None  # Or return a default value or raise an exception if needed
+
     def __str__(self):
         return self.text
+
     
 from django.db import models
 from django.contrib.auth.models import User
