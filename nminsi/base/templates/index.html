@@ -23,8 +23,15 @@
             <li>
                 <a class="dropdown-item" href="?sort=not_collaborated&page=1">Not Collaborated</a>
             </li>
+            <li>
+                <a class="dropdown-item" href="?sort=insta_asc&page=1">Instagram (Asc)</a>
+            </li>
+            <li>
+                <a class="dropdown-item" href="?sort=insta_desc&page=1">Instagram (Desc)</a>
+            </li>
         </ul>
     </div>
+    
     
 
     <div class="row">
@@ -34,7 +41,13 @@
                     <a href="{% url 'photo_detail' photo.id %}">
                         <span class="fg-image-wrap">
                             <img src="{{ photo.photo.url }}" class="img-fluid max-image-size">
-                            <div class="photo-number">{{ photo.number }}</div>
+                            <div class="photo-number">
+                                <a >{{ photo.number }}</a>
+                                <!-- Check if the photo has an associated haiku -->
+                                {% if photo.haiku_set.exists %}
+                                <a style="margin-left: 1rem;">Haiku ✔</a>
+                                {% endif %}
+                            </div>
                         </span>
                     </a>
                 </div>

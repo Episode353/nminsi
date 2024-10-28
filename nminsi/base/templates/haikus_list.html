@@ -38,6 +38,15 @@
                                 </a>
                             </p>
                         {% endif %}
+
+                        {% if haiku.photo %}
+                            <p>
+                                Photo: 
+                                <a href="{% url 'photo_detail' haiku.photo.id %}">
+                                    {{ haiku.photo.number }}
+                                </a>
+                            </p>
+                        {% endif %}
                     </div>
                 </div>
             </div>

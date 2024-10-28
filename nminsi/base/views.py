@@ -21,6 +21,7 @@ def main(request):
 
     # Handle sorting
     sort_option = request.GET.get('sort', 'number_asc')  # Default to 'number ascending'
+    
     if sort_option == 'date':
         photo_list = photo_list.order_by('date_taken')
     elif sort_option == 'collaborated':
@@ -29,6 +30,10 @@ def main(request):
         photo_list = photo_list.filter(collaborated=False).order_by('number')
     elif sort_option == 'number_desc':
         photo_list = photo_list.order_by('-number')  # Sort by number descending
+    elif sort_option == 'insta_asc':
+        photo_list = photo_list.order_by('insta')  # Sort by Instagram ascending
+    elif sort_option == 'insta_desc':
+        photo_list = photo_list.order_by('-insta')  # Sort by Instagram descending
     else:
         photo_list = photo_list.order_by('number')  # Sort by number ascending
 
@@ -38,6 +43,7 @@ def main(request):
     photos = paginator.get_page(page_number)
 
     return render(request, 'index.html', {'photos': photos, 'request': request})
+
 
 
 def haikus_list(request):
@@ -316,17 +322,19 @@ def change_password(request):
 from django.db.models import Q
 
 def photo_search(request):
-    query = request.GET.get('q', '')  # Get the search query from the GET request
-    photos = []
-    
-    if query:
-        # Search for matching photos and haikus
-        photos = Photo.objects.filter(
+    query = request.GET.get('q', '')
+    # Filter photos based on the search query
+    photos = Photo.objects.filter(
             Q(number__icontains=query) |
             Q(photographer__icontains=query) |
             Q(haiku__text__icontains=query) |
             Q(haiku__author__icontains=query)
         ).distinct()  # Use distinct() to avoid duplicate photos
+
+    # Set up pagination
+    paginator = Paginator(photos, 45)  # Display 45 photos per page
+    page_number = request.GET.get('page')
+    photos = paginator.get_page(page_number)
 
     return render(request, 'search_results.html', {'photos': photos, 'query': query})
 
