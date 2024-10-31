@@ -24,12 +24,16 @@
                 <a class="dropdown-item" href="?sort=not_collaborated&page=1">Not Collaborated</a>
             </li>
             <li>
+                <a class="dropdown-item" href="?sort=collaborated_not_posted&page=1">Collaborated and Not Posted</a>
+            </li>
+            <li>
                 <a class="dropdown-item" href="?sort=insta_asc&page=1">Instagram (Asc)</a>
             </li>
             <li>
                 <a class="dropdown-item" href="?sort=insta_desc&page=1">Instagram (Desc)</a>
             </li>
         </ul>
+        
     </div>
     
     
@@ -37,10 +41,22 @@
     <div class="row">
         {% for photo in photos %}
             <div class="col-md-4 mb-4">
-                <div class="{% if photo.collaborated %} grayed-out {% endif %} seasonal-content-box">
+                <div class="seasonal-content-box">
+                       <!-- Overlay image, centered and transparent -->
+
                     <a href="{% url 'photo_detail' photo.id %}">
-                        <span class="fg-image-wrap">
-                            <img src="{{ photo.photo.url }}" class="img-fluid max-image-size">
+
+                            <div class="position-relative">
+
+                            {% if photo.collaborated %}
+                            <div class="overlay">
+                                <img src="{% static 'png/leaf-circle.png' %}" alt="Overlay Image">
+                            </div>
+                            {% endif %}
+
+                            <!--<img src="{{ photo.photo.url }}" class=" {% if photo.collaborated %} grayed-out {% endif %} img-fluid max-image-size ">-->
+                            <img src="{{ photo.photo.url }}" class="{% if photo.collaborated %} grayed-out {% endif %} img-fluid max-image-size ">
+                        </div>
                             <div class="photo-number">
                                 <a >{{ photo.number }}</a>
                                 <!-- Check if the photo has an associated haiku -->
@@ -48,7 +64,8 @@
                                 <a style="margin-left: 1rem;">Haiku ✔</a>
                                 {% endif %}
                             </div>
-                        </span>
+                        
+
                     </a>
                 </div>
             </div>

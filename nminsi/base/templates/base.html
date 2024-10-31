@@ -123,11 +123,31 @@
 
     
 <style>
-    /* Additional styling for grayed out images */
+    /* Gray out the main image */
     .grayed-out {
-        opacity: 0.5; /* Make the photo appear faded */
+        position: relative;
+        opacity: 0.5; /* Gray out the image */
     }
 
+    /* Overlay styling */
+    .overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100%; /* Make the overlay take the full width of the parent */
+        height: 100%; /* Make the overlay take the full height of the parent */
+        display: flex; /* Use flexbox for centering */
+        justify-content: center; /* Center horizontally */
+        align-items: center; /* Center vertically */
+        pointer-events: none; /* Prevent the image from capturing mouse events */
+    }
+
+    .overlay img {
+        max-width: 70%; /* Ensure the image is responsive and does not exceed the overlay */
+        max-height: 70%; /* Ensure the image does not exceed the overlay height */
+        object-fit: contain; /* Maintain aspect ratio and fit inside the container */
+    }
     .seasonal-content-box {
         background-color: black; /* Changed to black for visibility */
         padding: 1.5rem;

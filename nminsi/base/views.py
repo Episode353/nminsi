@@ -13,8 +13,6 @@ from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 
 from .models import Photo, Haiku
 
-
-
 def main(request):
     # Fetch all photos from the database
     photo_list = Photo.objects.all()
@@ -28,6 +26,9 @@ def main(request):
         photo_list = photo_list.filter(collaborated=True).order_by('number')
     elif sort_option == 'not_collaborated':
         photo_list = photo_list.filter(collaborated=False).order_by('number')
+    elif sort_option == 'collaborated_not_posted':
+        # Assuming you have a field 'posted' to indicate if a photo has been posted
+        photo_list = photo_list.filter(collaborated=True, posted=False).order_by('number')
     elif sort_option == 'number_desc':
         photo_list = photo_list.order_by('-number')  # Sort by number descending
     elif sort_option == 'insta_asc':
@@ -43,6 +44,7 @@ def main(request):
     photos = paginator.get_page(page_number)
 
     return render(request, 'index.html', {'photos': photos, 'request': request})
+
 
 
 
@@ -210,6 +212,7 @@ def process_csv(request):
                     updates.append(f"Photo number {photo_number} does not exist.")
                     continue
 
+                # Update existing fields
                 photo.discard = row['Discard'].upper() == 'TRUE'
                 photo.done = row['Done'].upper() == 'TRUE'
                 photo.wbord = row['Wbord'].upper() == 'TRUE'
@@ -220,9 +223,14 @@ def process_csv(request):
                 photo.collaborated = photo.done
                 photo.photographer = row['Photographer'].strip()
 
+                # Update new fields
+                photo.queued = row['Queued'].upper() == 'TRUE' if 'Queued' in row else False
+                photo.posted = row['Posted'].upper() == 'TRUE' if 'Posted' in row else False
+                photo.authentication = row.get('Authentication', '').strip()
+
                 haiku_text = row['Haiku'].strip()
                 author = row['Author'].strip() or 'N. Minsi'
-                instagram_tag = row['Instagram Tag'].strip()  # Read Instagram tag from the CSV
+                instagram_tag = row['Instagram Tag'].strip()
 
                 if haiku_text:
                     haiku, created = Haiku.objects.filter(photo=photo).first(), False
@@ -231,7 +239,7 @@ def process_csv(request):
                     else:
                         haiku.text = haiku_text
                         haiku.author = author
-                        haiku.instagram_tag = instagram_tag  # Update the Instagram tag
+                        haiku.instagram_tag = instagram_tag
                     haiku.save()
 
                 photo.save()
@@ -242,13 +250,14 @@ def process_csv(request):
     return render(request, 'process_csv.html')
 
 
+
 @login_required
 def export_csv(request):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="photos_export.csv"'
 
     writer = csv.writer(response)
-    writer.writerow(['#', 'File Name', 'Discard', 'Done', 'Wbord', 'Insta', 'X', 'Folder', 'Gallery', 'Haiku', 'Author', 'Photographer', 'Instagram Tag'])  # Add Instagram Tag header
+    writer.writerow(['#', 'File Name', 'Discard', 'Done', 'Wbord', 'Insta', 'X', 'Folder', 'Gallery', 'Haiku', 'Author', 'Photographer', 'Instagram Tag', 'Queued', 'Posted', 'Authentication'])  # Add new headers
 
     photos = Photo.objects.all()
 
@@ -256,7 +265,7 @@ def export_csv(request):
         haiku = Haiku.objects.filter(photo=photo).first()
         haiku_text = haiku.text if haiku else ''
         haiku_author = haiku.author if haiku else ''
-        instagram_tag = haiku.instagram_tag if haiku else ''  # Get the Instagram tag
+        instagram_tag = haiku.instagram_tag if haiku else ''
 
         writer.writerow([
             photo.number,
@@ -270,11 +279,16 @@ def export_csv(request):
             'TRUE' if photo.gallery else 'FALSE',
             haiku_text,
             haiku_author,
-            photo.photographer,  # Add photographer to the export
-            instagram_tag  # Include the Instagram tag in the export
+            photo.photographer,
+            instagram_tag,
+            'TRUE' if photo.queued else 'FALSE',  # Export queued status
+            'TRUE' if photo.posted else 'FALSE',  # Export posted status
+            photo.authentication or '',  # Export authentication text
         ])
 
     return response
+
+
 
 
 def user_login(request):

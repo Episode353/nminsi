@@ -15,11 +15,20 @@ class Photo(models.Model):
     folder = models.BooleanField(default=False)
     gallery = models.BooleanField(default=False)
     photographer = models.CharField(max_length=100, default='N. Minsi')
+    queued = models.BooleanField(default=False)  # New field for queued status
+    posted = models.BooleanField(default=False)  # New field for posted status
+    authentication = models.TextField(blank=True, null=True)  # New text field for user input
 
     def __str__(self):
         return f"Photo {self.number} taken on {self.date_taken}"
 
     def delete(self, *args, **kwargs):
+        # First delete the photo file from the media folder
+        if self.photo and os.path.isfile(self.photo.path):
+            os.remove(self.photo.path)
+        # Call the parent class delete method to delete the object from the database
+        super().delete(*args, **kwargs)
+
         # First delete the photo file from the media folder
         if self.photo and os.path.isfile(self.photo.path):
             os.remove(self.photo.path)
