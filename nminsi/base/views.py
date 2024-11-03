@@ -240,14 +240,35 @@ def process_csv(request):
                 instagram_tag = row.get('Instagram Tag', '').strip()
 
                 if haiku_text:
-                    haiku, created = Haiku.objects.get_or_create(photo=photo, defaults={
-                        'text': haiku_text, 'author': author, 'instagram_tag': instagram_tag
-                    })
-                    if not created:
+                    # Using filter to avoid MultipleObjectsReturned
+                    haiku_queryset = Haiku.objects.filter(photo=photo)
+                    
+                    if haiku_queryset.exists():
+                        # If there are multiple haikus, just select the first one
+                        haiku = haiku_queryset.first()
                         haiku.text = haiku_text
                         haiku.author = author
                         haiku.instagram_tag = instagram_tag
                         haiku.save()
+                    else:
+                        # If no haiku exists, create a new one
+                        haiku = Haiku.objects.create(photo=photo, text=haiku_text, author=author, instagram_tag=instagram_tag)
+
+
+              # Update date_posted from the CSV row
+                date_posted_str = row.get('Date Posted', '').strip()
+                if date_posted_str:
+                    try:
+                        # Try to parse as YYYY-MM-DD first
+                        photo.date_posted = date.fromisoformat(date_posted_str)
+                    except ValueError:
+                        # If it fails, try to parse as MM/DD/YYYY
+                        try:
+                            month, day, year = map(int, date_posted_str.split('/'))
+                            photo.date_posted = date(year, month, day)
+                        except ValueError:
+                            updates.append(f"Invalid date format for photo number {photo_number}: {date_posted_str}")
+
 
                 photo.save()
                 updates.append(f"Updated photo number {photo_number} successfully.")
@@ -258,13 +279,14 @@ def process_csv(request):
 
 
 
+
 @login_required
 def export_csv(request):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="photos_export.csv"'
 
     writer = csv.writer(response)
-    writer.writerow(['#', 'File Name', 'Discard', 'Done', 'Wbord', 'Insta', 'X', 'Folder', 'Gallery', 'Haiku', 'Author', 'Photographer', 'Instagram Tag', 'Queued', 'Posted', 'Authentication'])  # Add new headers
+    writer.writerow(['#', 'File Name', 'Discard', 'Done', 'Wbord', 'Insta', 'X', 'Folder', 'Gallery', 'Haiku', 'Author', 'Photographer', 'Instagram Tag', 'Queued', 'Posted', 'Authentication', 'Date Posted'])  # Add Date Posted header
 
     photos = Photo.objects.all()
 
@@ -273,7 +295,7 @@ def export_csv(request):
         haiku_text = haiku.text if haiku else ''
         haiku_author = haiku.author if haiku else ''
         instagram_tag = haiku.instagram_tag if haiku else ''
-
+        
         writer.writerow([
             photo.number,
             photo.photo.name,
@@ -291,9 +313,11 @@ def export_csv(request):
             'TRUE' if photo.queued else 'FALSE',  # Export queued status
             'TRUE' if photo.posted else 'FALSE',  # Export posted status
             photo.authentication or '',  # Export authentication text
+            photo.date_posted.strftime('%Y-%m-%d') if photo.date_posted else '',  # Export Date Posted
         ])
 
     return response
+
 
 
 
