@@ -18,6 +18,7 @@ class Photo(models.Model):
     queued = models.BooleanField(default=False)  # New field for queued status
     posted = models.BooleanField(default=False)  # New field for posted status
     authentication = models.TextField(blank=True, null=True)  # New text field for user input
+    date_posted = models.DateField(blank=True, null=True)
 
     def __str__(self):
         return f"Photo {self.number} taken on {self.date_taken}"

@@ -12,7 +12,6 @@ urlpatterns = [
     path('haikus/', views.haikus_list, name='haikus'),  # Page to display all haikus
     path('haiku/create/', views.haiku_create, name='haiku_create'),  # Page to create a haiku
     path('photo/<int:photo_id>/', views.photo_detail, name='photo_detail'),
-    path('admin/', admin.site.urls),
     path('process_photos/', views.process_photos, name='process_photos'),
     path('process_csv/', views.process_csv, name='process_csv'),
     path('export_csv/', views.export_csv, name='export_csv'),
@@ -21,6 +20,7 @@ urlpatterns = [
     path('change-password/', views.change_password, name='change_password'),
     path('search/', views.photo_search, name='photo_search'),  # Add this line
     path('random_photo/', views.random_photo, name='random_photo'),
+    path('check-photo-errors/', views.check_photo_errors, name='check_photo_errors'),
 ]
 # Serve media files in production if DEBUG is False
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

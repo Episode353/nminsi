@@ -12,7 +12,6 @@
                     <img src="{{ photo.photo.url }}" class="card-img-top img-fluid" alt="Photo taken on {{ photo.date_taken }}" style="max-width: 100%; height: auto;"/>
                 </div>
                 <div class="card-body text-center">
-                    <h5 class="card-title">Date Taken: {{ photo.date_taken }}</h5>
                     <p class="card-title">Photographer: {{ photo.photographer }}</p>
                     <p class="card-text">Collaborated: {% if photo.collaborated %} Yes {% else %} No {% endif %}</p>
                     <a href="{% url 'haiku_create' %}?photo_number={{ photo.number }}" class="btn btn-custom">Create a Haiku</a>

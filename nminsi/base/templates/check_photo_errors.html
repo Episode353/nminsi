@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Error Checker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        h2 {
+            color: #e63946;
+            border-bottom: 2px solid #e63946;
+            padding-bottom: 5px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            background: #fff;
+            margin: 10px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        a {
+            text-decoration: none;
+            color: #007bff;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .no-photos {
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>Photo Error Checker</h1>
+
+    <section>
+        <h2>Error 1: `date_posted` has a date, but `posted` is set to False</h2>
+        <ul>
+            {% for photo in error_1_photos %}
+                <li>
+                    <strong>Photo {{ photo.number }}</strong> - Taken on: {{ photo.date_taken }} - Posted Date: {{ photo.date_posted }}
+                    <br>
+                    {% if photo.haiku_set.all %}
+                        <strong>Haikus:</strong>
+                        <ul>
+                            {% for haiku in photo.haiku_set.all %}
+                                <li>"{{ haiku.text }}" by {{ haiku.author }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <span class="no-photos">No haikus available.</span>
+                    {% endif %}
+                    <br>
+                    <a href="{% url 'photo_detail' photo.id %}">Photo Detail</a> |
+                    <a href="/admin/base/photo/{{ photo.id }}/change/">Admin Page</a>
+                </li>
+            {% empty %}
+                <p class="no-photos">No photos found with Error 1.</p>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section>
+        <h2>Error 2: `posted` is True, but `date_posted` is empty</h2>
+        <ul>
+            {% for photo in error_2_photos %}
+                <li>
+                    <strong>Photo {{ photo.number }}</strong> - Taken on: {{ photo.date_taken }}
+                    <br>
+                    {% if photo.haiku_set.all %}
+                        <strong>Haikus:</strong>
+                        <ul>
+                            {% for haiku in photo.haiku_set.all %}
+                                <li>"{{ haiku.text }}" by {{ haiku.author }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <span class="no-photos">No haikus available.</span>
+                    {% endif %}
+                    <br>
+                    <a href="{% url 'photo_detail' photo.id %}">Photo Detail</a> |
+                    <a href="/admin/base/photo/{{ photo.id }}/change/">Admin Page</a>
+                </li>
+            {% empty %}
+                <p class="no-photos">No photos found with Error 2.</p>
+            {% endfor %}
+        </ul>
+    </section>
+</body>
+</html>

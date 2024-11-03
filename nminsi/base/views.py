@@ -183,12 +183,18 @@ def process_photos(request):
 
     return HttpResponse('<br>'.join(updates))
 
+import csv
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
+from django.shortcuts import render
+from .models import Photo, Haiku
+
 @login_required
 def process_csv(request):
     if request.method == 'POST':
-        csv_file = request.FILES['csv_file']
+        csv_file = request.FILES.get('csv_file')
 
-        if not csv_file.name.endswith('.csv'):
+        if not csv_file or not csv_file.name.endswith('.csv'):
             return HttpResponse('This is not a CSV file.')
 
         file_data = csv_file.read().decode('utf-8').splitlines()
@@ -196,14 +202,14 @@ def process_csv(request):
         updates = []
 
         for row in reader:
-            file_name = row['File Name'].strip()
+            file_name = row.get('File Name', '').strip()
             photo_number = None
 
             if file_name.startswith("Instapics-"):
                 parts = file_name.split('-')
                 if len(parts) >= 3:
                     photo_number = int(parts[1])
-            elif row['#'].strip().isdigit():
+            elif row.get('#', '').strip().isdigit():
                 photo_number = int(row['#'].strip())
 
             if photo_number is not None:
@@ -213,34 +219,35 @@ def process_csv(request):
                     continue
 
                 # Update existing fields
-                photo.discard = row['Discard'].upper() == 'TRUE'
-                photo.done = row['Done'].upper() == 'TRUE'
-                photo.wbord = row['Wbord'].upper() == 'TRUE'
-                photo.insta = row['Insta'].upper() == 'TRUE'
-                photo.x = row['X'].upper() == 'TRUE'
-                photo.folder = row['Folder'].upper() == 'TRUE'
-                photo.gallery = row['Gallery'].upper() == 'TRUE'
+                photo.discard = row.get('Discard', '').upper() == 'TRUE'
+                photo.done = row.get('Done', '').upper() == 'TRUE'
+                photo.wbord = row.get('Wbord', '').upper() == 'TRUE'
+                photo.insta = row.get('Insta', '').upper() == 'TRUE'
+                photo.x = row.get('X', '').upper() == 'TRUE'
+                photo.folder = row.get('Folder', '').upper() == 'TRUE'
+                photo.gallery = row.get('Gallery', '').upper() == 'TRUE'
                 photo.collaborated = photo.done
-                photo.photographer = row['Photographer'].strip()
+                photo.photographer = row.get('Photographer', '').strip() or 'Unknown'
 
-                # Update new fields
-                photo.queued = row['Queued'].upper() == 'TRUE' if 'Queued' in row else False
-                photo.posted = row['Posted'].upper() == 'TRUE' if 'Posted' in row else False
+                # Update new fields with defaults if missing
+                photo.queued = row.get('Queued', 'FALSE').upper() == 'TRUE'
+                photo.posted = row.get('Posted', 'FALSE').upper() == 'TRUE'
                 photo.authentication = row.get('Authentication', '').strip()
 
-                haiku_text = row['Haiku'].strip()
-                author = row['Author'].strip() or 'N. Minsi'
-                instagram_tag = row['Instagram Tag'].strip()
+                # Handle Haiku details if provided
+                haiku_text = row.get('Haiku', '').strip()
+                author = row.get('Author', '').strip() or 'N. Minsi'
+                instagram_tag = row.get('Instagram Tag', '').strip()
 
                 if haiku_text:
-                    haiku, created = Haiku.objects.filter(photo=photo).first(), False
-                    if haiku is None:
-                        haiku = Haiku(photo=photo, text=haiku_text, author=author, instagram_tag=instagram_tag)
-                    else:
+                    haiku, created = Haiku.objects.get_or_create(photo=photo, defaults={
+                        'text': haiku_text, 'author': author, 'instagram_tag': instagram_tag
+                    })
+                    if not created:
                         haiku.text = haiku_text
                         haiku.author = author
                         haiku.instagram_tag = instagram_tag
-                    haiku.save()
+                        haiku.save()
 
                 photo.save()
                 updates.append(f"Updated photo number {photo_number} successfully.")
@@ -363,3 +370,20 @@ def random_photo(request):
         return redirect('photo_detail', photo_id=random_photo.id)
     else:
         return redirect('main')  # If no photos exist, redirect to the main page
+
+from django.shortcuts import render
+from .models import Photo
+
+@login_required
+def check_photo_errors(request):
+    # Query photos with error 1: posted_date has a date but posted is False
+    error_1_photos = Photo.objects.filter(date_posted__isnull=False, posted=False)
+
+    # Query photos with error 2: posted is True, but posted_date is empty
+    error_2_photos = Photo.objects.filter(posted=True, date_posted__isnull=True)
+
+    # Render these photos in the template
+    return render(request, 'check_photo_errors.html', {
+        'error_1_photos': error_1_photos,
+        'error_2_photos': error_2_photos,
+    })
